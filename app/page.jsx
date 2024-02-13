@@ -58,7 +58,7 @@ const UserIcon = async ({ promise }) => {
 	const user = await promise;
 
 	return (
-		<Image alt='👨‍💻' width={100} height={100} src={user.avatar_url || data.avatarUrl} className="float-right rounded-full mx-4" />
+		<Image alt='👨‍💻' width={100} height={100} src="/image.png" className="float-right rounded-full mx-4" />
 	);
 };
 
