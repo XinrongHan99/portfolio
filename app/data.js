@@ -4,14 +4,13 @@ const revalidate = 60;
 const MINUTES_5 = 60 * 5;
 const HOURS_1 = 60 * 60;
 const HOURS_12 = 60 * 60 * 12;
-const GH_TOKEN = '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';
 
 // TODO: Implement option to switch between info for authenticated user and other users.
 export async function getUser(username) {
 	console.log('Fetching user data for', username);
 	console.time('getUser');
 	const res = await fetch('https://api.github.com/users/' + username, {
-		headers: { Authorization: `Bearer ${GH_TOKEN}` },
+		headers: { Authorization: `Bearer ${process.env.GH_TOKEN}` },
 		next: { revalidate }
 	});
 	console.timeEnd('getUser');
@@ -22,7 +21,7 @@ export async function getRepos(username) {
 	console.log('Fetching repos for', username);
 	console.time('getRepos');
 	const res = await fetch('https://api.github.com/users/' + username + '/repos', {
-		headers: { Authorization: `Bearer ${GH_TOKEN}` },
+		headers: { Authorization: `Bearer ${process.env.GH_TOKEN}` },
 		next: { revalidate: MINUTES_5 }
 	});
 	console.timeEnd('getRepos');
@@ -33,7 +32,7 @@ export async function getSocialAccounts(username) {
 	console.log('Fetching social accounts for', username);
 	console.time('getSocialAccounts');
 	const res = await fetch('https://api.github.com/users/' + username + '/social_accounts', {
-		headers: { Authorization: `Bearer ${GH_TOKEN}` },
+		headers: { Authorization: `Bearer ${process.env.GH_TOKEN}` },
 		next: { MINUTES_5 }
 	});
 	console.timeEnd('getSocialAccounts');
@@ -45,10 +44,13 @@ export const getPinnedRepos = cache(async (username) => {
 	console.time('getPinnedRepos');
 	const res = await fetch('https://api.github.com/graphql', {
 		method: 'POST',
-		headers: { Authorization: `Bearer ${GH_TOKEN}` },
+		headers: { Authorization: `Bearer ${process.env.GH_TOKEN}` },
 		body: JSON.stringify({ query: `{user(login: "${username}") {pinnedItems(first: 6, types: REPOSITORY) {nodes {... on Repository {name}}}}}` }),
 	});
 	const pinned = await res.json();
+	console.log("DEBUGGING: pinned", pinned);
+	console.log(JSON.stringify(pinned, null, 2));
+
 	console.timeEnd('getPinnedRepos');
 	const names = pinned.data.user.pinnedItems.nodes.map((node) => node.name);
 	return names;
@@ -60,7 +62,7 @@ export const getUserOrganizations = async (username) => {
 	const res = await fetch('https://api.github.com/graphql', {
 		next: { MINUTES_5 },
 		method: 'POST',
-		headers: { Authorization: `Bearer ${GH_TOKEN}` },
+		headers: { Authorization: `Bearer ${process.env.GH_TOKEN}` },
 		body: JSON.stringify({
 			query: `{user(login: "${username}") {organizations(first: 6) {nodes {name,websiteUrl,url,avatarUrl,description}}}}`
 		}),
@@ -92,7 +94,7 @@ export const getVercelProjects = async () => {
 export const getNextjsLatestRelease = cache(async () => {
 	const res = await fetch('https://api.github.com/graphql', {
 		method: 'POST',
-		headers: { Authorization: `Bearer ${GH_TOKEN}` },
+		headers: { Authorization: `Bearer ${process.env.GH_TOKEN}` },
 		body: JSON.stringify({
 			query: `{
 				repository(name: "next.js", owner: "vercel") {
@@ -120,7 +122,7 @@ export const getNextjsLatestRelease = cache(async () => {
 export const getRepositoryPackageJson = cache(async (username, reponame) => {
 	const res = await fetch('https://api.github.com/graphql', {
 		method: 'POST',
-		headers: { Authorization: `Bearer ${GH_TOKEN}` },
+		headers: { Authorization: `Bearer ${process.env.GH_TOKEN}` },
 		body: JSON.stringify({
 			query: `{
 				repository(name: "${reponame}", owner: "${username}") {
@@ -147,7 +149,7 @@ export const getRecentUserActivity = cache(async (username) => {
 	console.log('Fetching recent activity for', username);
 	console.time('getRecentUserActivity');
 	const res = await fetch('https://api.github.com/users/' + username + '/events', {
-		headers: { Authorization: `Bearer ${GH_TOKEN}` },
+		headers: { Authorization: `Bearer ${process.env.GH_TOKEN}` },
 	});
 	const response = await res.json();
 	console.timeEnd('getRecentUserActivity');
@@ -156,7 +158,7 @@ export const getRecentUserActivity = cache(async (username) => {
 
 export const getTrafficPageViews = async (username, reponame) => {
 	const res = await fetch('https://api.github.com/repos/' + username + '/' + reponame + '/traffic/views', {
-		headers: { Authorization: `Bearer ${GH_TOKEN}` },
+		headers: { Authorization: `Bearer ${process.env.GH_TOKEN}` },
 		next: { revalidate: HOURS_1 }
 	});
 	const response = await res.json();
@@ -173,7 +175,7 @@ export const getTrafficPageViews = async (username, reponame) => {
 
 export const getDependabotAlerts = cache(async (username, reponame) => {
 	const res = await fetch('https://api.github.com/repos/' + username + '/' + reponame + '/dependabot/alerts', {
-		headers: { Authorization: `Bearer ${GH_TOKEN}` },
+		headers: { Authorization: `Bearer ${process.env.GH_TOKEN}` },
 	});
 
 	const response = await res.json();
@@ -212,11 +214,11 @@ export async function checkAppJsxExistence(repoOwner, repoName) {
 	try {
 		const [ isPagesRes, isAppLayoutRes ] = await Promise.all([
 			fetch(urlPagesApp, {
-				headers: { Authorization: `Bearer ${GH_TOKEN}` },
+				headers: { Authorization: `Bearer ${process.env.GH_TOKEN}` },
 				next: { HOURS_12 }
 			}),
 			fetch(urlAppLayout, {
-				headers: { Authorization: `Bearer ${GH_TOKEN}` },
+				headers: { Authorization: `Bearer ${process.env.GH_TOKEN}` },
 				next: { HOURS_12 }
 			}),
 		]);
